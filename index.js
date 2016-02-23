@@ -1,4 +1,5 @@
 import { Board, Led } from 'johnny-five';
+import Promise from 'bluebird';
 
 const board = new Board({
   port: '/dev/ttyACM0'
@@ -6,18 +7,47 @@ const board = new Board({
 
 board.on('ready', function ready() {
   console.log('Board is ready');
-  const led = new Led(11);
+  const red = new Led(13);
+  const yellow = new Led(12);
+  const green = new Led(8);
 
-  led.pulse({
-    easing: 'linear',
-    duration: 3000,
-    cuePoints: [0, 0.2, 0.4, 0.6, 0.8, 1],
-    keyFrames: [0, 10, 0, 50, 0, 255],
-    onstop: () => console.log('Animation has stopped')
-  });
+  const stop = () => {
+    return new Promise((resolve, reject) => {
+      green.off();
+      yellow.off();
+      red.on();
+      setTimeout(() => {
+        resolve();
+      }, 4000);
+    });
 
-  this.wait(12000, () => {
-    led.stop().off()
-  });
+  }
+
+  const amber = () => {
+    return new Promise((resolve, reject) => {
+      green.off();
+      yellow.on();
+      red.off();
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    });
+  }
+
+  const go = () => {
+    return new Promise((resolve, reject) => {
+      green.on();
+      yellow.off();
+      red.off();
+      setTimeout(() => {
+        resolve()
+      }, 4000);
+    });
+  }
+
+  stop().then(go).then(amber)
+  this.loop(10000, () => {
+    stop().then(go).then(amber);
+  })
 
 });
